@@ -1,6 +1,8 @@
+import { Ionicons } from '@expo/vector-icons'
 import React, { useState } from 'react'
-import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native'
-import { COLORS, RADIUS } from '../constants/theme'
+import { ScrollView, StyleSheet, Text, TextInput, TextInputProps, TouchableOpacity, View } from 'react-native'
+import { RADIUS } from '../constants/theme'
+import { useTheme } from '../hooks/useTheme'
 
 interface FieldProps {
   label: string
@@ -9,10 +11,11 @@ interface FieldProps {
 }
 
 export function Field({ label, required, children }: FieldProps) {
+  const { colors } = useTheme()
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>
-        {label}{required && <Text style={{ color: COLORS.teal }}> *</Text>}
+      <Text style={[styles.label, { color: colors.textSecondary }]}>
+        {label}{required && <Text style={{ color: colors.primary }}> *</Text>}
       </Text>
       {children}
     </View>
@@ -25,6 +28,7 @@ interface InputProps extends TextInputProps {
 }
 
 export function FInput({ label, required, ...props }: InputProps) {
+  const { colors } = useTheme()
   const [focused, setFocused] = useState(false)
   return (
     <Field label={label} required={required}>
@@ -32,8 +36,16 @@ export function FInput({ label, required, ...props }: InputProps) {
         {...props}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        placeholderTextColor={COLORS.textMuted}
-        style={[styles.input, focused && styles.inputFocused, props.style as any]}
+        placeholderTextColor={colors.textMuted}
+        style={[
+          styles.input,
+          {
+            backgroundColor: colors.surface,
+            borderColor: focused ? colors.primary : colors.glassBorder,
+            color: colors.textPrimary,
+          },
+          props.style as any,
+        ]}
       />
     </Field>
   )
@@ -48,34 +60,61 @@ interface SelectProps {
 }
 
 export function FSelect({ label, required, value, options, onChange }: SelectProps) {
+  const { colors } = useTheme()
   const [open, setOpen] = useState(false)
   const selected = options.find(o => o.value === value)
 
   return (
     <Field label={label} required={required}>
-      <View>
-        <View
-          style={[styles.input, styles.selectBox]}
-          onTouchEnd={() => setOpen(!open)}
+      <View style={{ zIndex: open ? 999 : 1 }}>
+        <TouchableOpacity
+          onPress={() => setOpen(!open)}
+          style={[
+            styles.input,
+            styles.selectBox,
+            {
+              backgroundColor: colors.surface,
+              borderColor: open ? colors.primary : colors.glassBorder,
+            },
+          ]}
         >
-          <Text style={{ color: COLORS.textPrimary, fontSize: 14 }}>
+          <Text style={{ color: selected ? colors.textPrimary : colors.textMuted, fontSize: 14, flex: 1 }}>
             {selected?.label || 'Seleccionar...'}
           </Text>
-          <Text style={{ color: COLORS.textMuted }}>▾</Text>
-        </View>
+          <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textMuted} />
+        </TouchableOpacity>
+
         {open && (
-          <View style={styles.dropdown}>
-            {options.map(opt => (
-              <View
-                key={opt.value}
-                style={[styles.dropdownItem, opt.value === value && styles.dropdownItemActive]}
-                onTouchEnd={() => { onChange(opt.value); setOpen(false) }}
-              >
-                <Text style={{ color: opt.value === value ? COLORS.teal : COLORS.textPrimary, fontSize: 14 }}>
-                  {opt.label}
-                </Text>
-              </View>
-            ))}
+          <View style={[styles.dropdown, {
+            backgroundColor: colors.surface,
+            borderColor: colors.glassBorder,
+          }]}>
+            <ScrollView bounces={false} nestedScrollEnabled style={{ maxHeight: 200 }}>
+              {options.map((opt, i) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  onPress={() => { onChange(opt.value); setOpen(false) }}
+                  style={[
+                    styles.dropdownItem,
+                    { borderBottomColor: colors.glassBorder },
+                    i === options.length - 1 && { borderBottomWidth: 0 },
+                    opt.value === value && { backgroundColor: colors.primary + '15' },
+                  ]}
+                >
+                  <Text style={{
+                    color: opt.value === value ? colors.primary : colors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: opt.value === value ? '600' : '400',
+                    flex: 1,
+                  }}>
+                    {opt.label}
+                  </Text>
+                  {opt.value === value && (
+                    <Ionicons name="checkmark" size={16} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         )}
       </View>
@@ -89,6 +128,7 @@ interface TextareaProps extends TextInputProps {
 }
 
 export function FTextarea({ label, required, ...props }: TextareaProps) {
+  const { colors } = useTheme()
   const [focused, setFocused] = useState(false)
   return (
     <Field label={label} required={required}>
@@ -98,8 +138,16 @@ export function FTextarea({ label, required, ...props }: TextareaProps) {
         numberOfLines={4}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        placeholderTextColor={COLORS.textMuted}
-        style={[styles.input, styles.textarea, focused && styles.inputFocused]}
+        placeholderTextColor={colors.textMuted}
+        style={[
+          styles.input,
+          styles.textarea,
+          {
+            backgroundColor: colors.surface,
+            borderColor: focused ? colors.primary : colors.glassBorder,
+            color: colors.textPrimary,
+          },
+        ]}
       />
     </Field>
   )
@@ -110,21 +158,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: '600',
-    color: COLORS.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
-    borderColor: COLORS.glassBorder,
     borderRadius: RADIUS.sm,
-    color: COLORS.textPrimary,
     padding: 12,
     fontSize: 14,
-  },
-  inputFocused: {
-    borderColor: COLORS.teal,
   },
   selectBox: {
     flexDirection: 'row',
@@ -136,25 +177,21 @@ const styles = StyleSheet.create({
     top: 48,
     left: 0,
     right: 0,
-    backgroundColor: COLORS.navySoft,
     borderWidth: 1,
-    borderColor: COLORS.glassBorder,
     borderRadius: RADIUS.sm,
     zIndex: 999,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 10,
-    maxHeight: 220,
   },
   dropdownItem: {
-    padding: 12,
+    padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.glassBorder,
-  },
-  dropdownItemActive: {
-    backgroundColor: 'rgba(0,201,177,0.08)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   textarea: {
     minHeight: 90,

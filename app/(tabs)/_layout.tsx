@@ -1,69 +1,102 @@
+import { Ionicons } from '@expo/vector-icons'
 import { Tabs } from 'expo-router'
-import { Text } from 'react-native'
-import { COLORS } from '../../constants/theme'
+import { StyleSheet, useColorScheme, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { DARK, LIGHT } from '../../constants/theme'
 
-function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
+function TabIcon({ name, focused, colors }: { name: any; focused: boolean; colors: typeof LIGHT }) {
   return (
-    <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.45 }}>{icon}</Text>
+    <View style={[styles.iconWrapper, focused && { backgroundColor: colors.primary + '20' }]}>
+      <Ionicons
+        name={name}
+        size={22}
+        color={focused ? colors.primary : colors.textMuted}
+      />
+    </View>
   )
 }
 
 export default function TabsLayout() {
+  const scheme = useColorScheme()
+  const colors = scheme === 'dark' ? DARK : LIGHT
+  const isDark = scheme === 'dark'
+  const insets = useSafeAreaInsets()
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: COLORS.navyMid,
-          borderTopColor: COLORS.glassBorder,
-          borderTopWidth: 1,
-          height: 62,
-          paddingBottom: 8,
-          paddingTop: 6,
+          position: 'absolute',
+          bottom: insets.bottom > 0 ? insets.bottom : 10,
+          marginHorizontal: 7,
+          backgroundColor: colors.surface,
+          borderTopWidth: 0,
+          borderRadius: 30,
+          height: 60,
+          paddingTop: 11,
+          paddingBottom: 10,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: isDark ? 0.35 : 0.1,
+          shadowRadius: 20,
+          elevation: 18,
         },
-        tabBarActiveTintColor: COLORS.teal,
-        tabBarInactiveTintColor: COLORS.textMuted,
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '600',
-        },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Inicio',
-          tabBarIcon: ({ focused }) => <TabIcon icon="⌂" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'home' : 'home-outline'} focused={focused} colors={colors} />
+          ),
         }}
       />
       <Tabs.Screen
         name="pets"
         options={{
-          title: 'Mascotas',
-          tabBarIcon: ({ focused }) => <TabIcon icon="🐾" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'paw' : 'paw-outline'} focused={focused} colors={colors} />
+          ),
         }}
       />
       <Tabs.Screen
         name="appointments"
         options={{
-          title: 'Citas',
-          tabBarIcon: ({ focused }) => <TabIcon icon="📅" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'calendar' : 'calendar-outline'} focused={focused} colors={colors} />
+          ),
         }}
       />
       <Tabs.Screen
         name="health"
         options={{
-          title: 'Cartilla',
-          tabBarIcon: ({ focused }) => <TabIcon icon="💉" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'medkit' : 'medkit-outline'} focused={focused} colors={colors} />
+          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Ajustes',
-          tabBarIcon: ({ focused }) => <TabIcon icon="⚙" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'settings' : 'settings-outline'} focused={focused} colors={colors} />
+          ),
         }}
       />
     </Tabs>
   )
 }
+
+const styles = StyleSheet.create({
+  iconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+})

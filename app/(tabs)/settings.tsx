@@ -1,19 +1,34 @@
-import React, { useState } from 'react'
-import { View, Text, ScrollView, Switch, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useApp } from '../../context/AppContext'
-import Card from '../../components/Card'
+import React, { useState } from 'react'
+import { Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native'
 import Button from '../../components/Button'
-import { COLORS, RADIUS } from '../../constants/theme'
+import { RADIUS } from '../../constants/theme'
+import { useApp } from '../../context/AppContext'
+import { useTheme } from '../../hooks/useTheme'
 
-function SRow({ icon, title, desc, children }: any) {
+function SRow({ iconName, title, desc, colors, children, last }: any) {
   return (
-    <View style={styles.sRow}>
-      <View style={styles.sRowIcon}><Text style={{ fontSize: 18 }}>{icon}</Text></View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.sRowTitle}>{title}</Text>
-        <Text style={styles.sRowDesc}>{desc}</Text>
+    <View style={[styles.sRow, !last && { borderBottomWidth: 1, borderBottomColor: colors.glassBorder }]}>
+      <View style={[styles.sRowIcon, { backgroundColor: colors.primary + '15' }]}>
+        <Ionicons name={iconName} size={18} color={colors.primary} />
       </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.sRowTitle, { color: colors.textPrimary }]}>{title}</Text>
+        <Text style={[styles.sRowDesc, { color: colors.textSecondary }]}>{desc}</Text>
+      </View>
+      {children}
+    </View>
+  )
+}
+
+function SectionTitle({ title, colors }: any) {
+  return <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{title}</Text>
+}
+
+function SCard({ children, colors }: any) {
+  return (
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.glassBorder }]}>
       {children}
     </View>
   )
@@ -21,6 +36,7 @@ function SRow({ icon, title, desc, children }: any) {
 
 export default function SettingsScreen() {
   const { notifications, toggleNotifications, pets, appointments } = useApp()
+  const { colors } = useTheme()
   const [email, setEmail] = useState(true)
   const [push, setPush] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -31,100 +47,121 @@ export default function SettingsScreen() {
   }
 
   const clearData = () => {
-    Alert.alert('¿Eliminar todo?', 'Se borrarán todos tus datos guardados. Esta acción no se puede deshacer.', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar', style: 'destructive',
-        onPress: async () => {
+    Alert.alert(
+      '¿Eliminar todo?',
+      'Se borrarán todos tus datos. Esta acción no se puede deshacer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Eliminar', style: 'destructive', onPress: async () => {
           await AsyncStorage.clear()
           Alert.alert('Listo', 'Datos eliminados. Reinicia la app.')
-        }
-      }
-    ])
+        }},
+      ]
+    )
   }
 
+  const switchColors = { false: colors.glassBorder, true: colors.primary }
+
   return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Configuración</Text>
-        <Text style={styles.headerSub}>Personaliza tu experiencia</Text>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.glassBorder }]}>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Configuración</Text>
+        <Text style={[styles.headerSub, { color: colors.textSecondary }]}>Personaliza tu experiencia</Text>
       </View>
 
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
 
-        {/* Profile */}
-        <Card glow style={styles.profileCard}>
-          <View style={styles.profileAvatar}>
+        {/* Profile card */}
+        <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.glassBorder }]}>
+          <View style={[styles.profileAvatar, { backgroundColor: colors.primary }]}>
             <Text style={styles.profileInitial}>J</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.profileName}>Juan García</Text>
-            <Text style={styles.profileEmail}>juan@ejemplo.com</Text>
+            <Text style={[styles.profileName, { color: colors.textPrimary }]}>Juan García</Text>
+            <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>juan@ejemplo.com</Text>
             <View style={styles.profileStats}>
               <View style={styles.profileStat}>
-                <Text style={[styles.profileStatVal, { color: COLORS.teal }]}>{pets.length}</Text>
-                <Text style={styles.profileStatLabel}>Mascotas</Text>
+                <Text style={[styles.profileStatVal, { color: colors.primary }]}>{pets.length}</Text>
+                <Text style={[styles.profileStatLabel, { color: colors.textMuted }]}>Mascotas</Text>
               </View>
+              <View style={[styles.statDivider, { backgroundColor: colors.glassBorder }]} />
               <View style={styles.profileStat}>
-                <Text style={[styles.profileStatVal, { color: COLORS.amber }]}>{appointments.length}</Text>
-                <Text style={styles.profileStatLabel}>Citas</Text>
+                <Text style={[styles.profileStatVal, { color: colors.amber }]}>{appointments.length}</Text>
+                <Text style={[styles.profileStatLabel, { color: colors.textMuted }]}>Citas</Text>
               </View>
             </View>
           </View>
-          <Button variant="secondary" size="sm" onPress={() => {}}>Editar</Button>
-        </Card>
+          <TouchableOpacity style={[styles.editBtn, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}>
+            <Ionicons name="pencil-outline" size={16} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
 
         {/* Notifications */}
-        <Text style={styles.sectionTitle}>🔔 Notificaciones</Text>
-        <Card style={styles.card}>
-          <SRow icon="🔔" title="Notificaciones de citas" desc="Recordatorios de citas próximas">
-            <Switch value={notifications} onValueChange={toggleNotifications} trackColor={{ false: COLORS.slate, true: COLORS.teal }} thumbColor="white" />
+        <SectionTitle title="NOTIFICACIONES" colors={colors} />
+        <SCard colors={colors}>
+          <SRow iconName="notifications-outline" title="Citas" desc="Recordatorios de citas próximas" colors={colors}>
+            <Switch value={notifications} onValueChange={toggleNotifications} trackColor={switchColors} thumbColor="white" />
           </SRow>
-          <SRow icon="📧" title="Notificaciones por email" desc="Confirmaciones en tu correo">
-            <Switch value={email} onValueChange={setEmail} trackColor={{ false: COLORS.slate, true: COLORS.teal }} thumbColor="white" />
+          <SRow iconName="mail-outline" title="Email" desc="Confirmaciones en tu correo" colors={colors}>
+            <Switch value={email} onValueChange={setEmail} trackColor={switchColors} thumbColor="white" />
           </SRow>
-          <SRow icon="📱" title="Notificaciones push" desc="Alertas en tiempo real">
-            <Switch value={push} onValueChange={setPush} trackColor={{ false: COLORS.slate, true: COLORS.teal }} thumbColor="white" />
+          <SRow iconName="phone-portrait-outline" title="Push" desc="Alertas en tiempo real" colors={colors}>
+            <Switch value={push} onValueChange={setPush} trackColor={switchColors} thumbColor="white" />
           </SRow>
-          <SRow icon="💉" title="Recordatorio de vacunas" desc="Alerta cuando una vacuna vence">
-            <Switch value={notifications} onValueChange={toggleNotifications} trackColor={{ false: COLORS.slate, true: COLORS.teal }} thumbColor="white" />
+          <SRow iconName="shield-checkmark-outline" title="Vacunas" desc="Alerta cuando una vacuna vence" colors={colors} last>
+            <Switch value={notifications} onValueChange={toggleNotifications} trackColor={switchColors} thumbColor="white" />
           </SRow>
-        </Card>
-
+        </SCard>
         {/* Appearance */}
-        <Text style={styles.sectionTitle}>🎨 Apariencia</Text>
-        <Card style={styles.card}>
-          <SRow icon="🌙" title="Modo oscuro" desc="Interfaz oscura (activo)">
-            <Switch value={true} onValueChange={() => {}} trackColor={{ false: COLORS.slate, true: COLORS.teal }} thumbColor="white" />
+        <SectionTitle title="APARIENCIA" colors={colors} />
+        <SCard colors={colors}>
+          <SRow iconName="moon-outline" title="Modo oscuro" desc="Sigue la configuración del sistema" colors={colors} last>
+            <Switch
+              value={true}
+              onValueChange={() => {}}
+              trackColor={{ false: colors.glassBorder, true: colors.primary }}
+              thumbColor="white"
+            />
           </SRow>
-        </Card>
+        </SCard>
 
         {/* Data */}
-        <Text style={styles.sectionTitle}>💾 Datos</Text>
-        <Card style={styles.card}>
-          <SRow icon="🗑" title="Limpiar datos" desc="Elimina todos los datos guardados">
+        <SectionTitle title="DATOS" colors={colors} />
+        <SCard colors={colors}>
+          <SRow iconName="trash-outline" title="Limpiar datos" desc="Elimina todos los datos guardados" colors={colors} last>
             <Button size="sm" variant="danger" onPress={clearData}>Limpiar</Button>
           </SRow>
-        </Card>
+        </SCard>
 
         {/* About */}
-        <Text style={styles.sectionTitle}>ℹ️ Acerca de</Text>
-        <Card style={styles.card}>
-          <View style={styles.aboutRow}>
-            <View style={styles.aboutIcon}><Text style={{ fontSize: 28 }}>🐾</Text></View>
-            <View>
-              <Text style={styles.aboutTitle}><Text style={{ color: COLORS.teal }}>P</Text>Vet</Text>
-              <Text style={styles.aboutVersion}>Versión 1.0.0 · Veterinaria Inteligente</Text>
-            </View>
+        <SectionTitle title="ACERCA DE" colors={colors} />
+        <View style={[styles.aboutCard, { backgroundColor: colors.surface, borderColor: colors.glassBorder }]}>
+          <View style={[styles.aboutIcon, { backgroundColor: colors.primary }]}>
+            <Ionicons name="paw" size={26} color="#fff" />
           </View>
-          <Text style={styles.aboutDesc}>
-            PVet es tu plataforma de gestión veterinaria. Registra mascotas, agenda citas, lleva la cartilla de salud y más.
-          </Text>
-        </Card>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.aboutTitle, { color: colors.textPrimary }]}>
+              <Text style={{ color: colors.primary }}>P</Text>Vet
+            </Text>
+            <Text style={[styles.aboutVersion, { color: colors.textSecondary }]}>
+              Versión 1.0.0 · Veterinaria Inteligente
+            </Text>
+          </View>
+        </View>
+        <Text style={[styles.aboutDesc, { color: colors.textSecondary }]}>
+          PVet es tu plataforma de gestión veterinaria. Registra mascotas, agenda citas, lleva la cartilla de salud y más.
+        </Text>
 
         {/* Save */}
         <View style={styles.saveRow}>
-          {saved && <Text style={styles.savedText}>✓ Configuración guardada</Text>}
+          {saved && (
+            <View style={[styles.savedBadge, { backgroundColor: colors.success + '18' }]}>
+              <Ionicons name="checkmark-circle-outline" size={14} color={colors.success} />
+              <Text style={[styles.savedText, { color: colors.success }]}>Guardado</Text>
+            </View>
+          )}
           <Button onPress={save} size="lg">Guardar Cambios</Button>
         </View>
 
@@ -134,30 +171,36 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.navy },
-  header: { paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16, backgroundColor: COLORS.navyMid, borderBottomWidth: 1, borderBottomColor: COLORS.glassBorder },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: COLORS.textPrimary },
-  headerSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  profileCard: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 24 },
-  profileAvatar: { width: 64, height: 64, borderRadius: 18, backgroundColor: COLORS.teal, alignItems: 'center', justifyContent: 'center' },
-  profileInitial: { fontSize: 28, fontWeight: '800', color: COLORS.navy },
-  profileName: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary },
-  profileEmail: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
-  profileStats: { flexDirection: 'row', gap: 16, marginTop: 8 },
+  screen: { flex: 1 },
+  header: { paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16, borderBottomWidth: 1 },
+  headerTitle: { fontSize: 24, fontWeight: '800' },
+  headerSub: { fontSize: 12, marginTop: 2 },
+  profileCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    padding: 18, borderRadius: RADIUS.lg, borderWidth: 1, marginBottom: 24,
+  },
+  profileAvatar: { width: 58, height: 58, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  profileInitial: { fontSize: 26, fontWeight: '800', color: '#fff' },
+  profileName: { fontSize: 17, fontWeight: '700' },
+  profileEmail: { fontSize: 12, marginTop: 2 },
+  profileStats: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
   profileStat: { alignItems: 'center' },
-  profileStatVal: { fontSize: 20, fontWeight: '800' },
-  profileStatLabel: { fontSize: 10, color: COLORS.textMuted },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, marginTop: 4 },
-  card: { marginBottom: 20, padding: 4 },
-  sRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderBottomWidth: 1, borderBottomColor: COLORS.glassBorder },
-  sRowIcon: { width: 38, height: 38, borderRadius: 10, backgroundColor: COLORS.glass, borderWidth: 1, borderColor: COLORS.glassBorder, alignItems: 'center', justifyContent: 'center' },
-  sRowTitle: { fontWeight: '600', fontSize: 14, color: COLORS.textPrimary },
-  sRowDesc: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
-  aboutRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 12, padding: 14 },
-  aboutIcon: { width: 52, height: 52, backgroundColor: COLORS.teal, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  aboutTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary },
-  aboutVersion: { fontSize: 12, color: COLORS.textSecondary },
-  aboutDesc: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, paddingHorizontal: 14, paddingBottom: 14 },
+  profileStatVal: { fontSize: 18, fontWeight: '800' },
+  profileStatLabel: { fontSize: 10 },
+  statDivider: { width: 1, height: 24 },
+  editBtn: { width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  sectionTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 10, marginTop: 4 },
+  card: { borderRadius: RADIUS.md, borderWidth: 1, marginBottom: 20, overflow: 'hidden' },
+  sRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
+  sRowIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  sRowTitle: { fontWeight: '600', fontSize: 14 },
+  sRowDesc: { fontSize: 12, marginTop: 1 },
+  aboutCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: RADIUS.md, borderWidth: 1, marginBottom: 10 },
+  aboutIcon: { width: 50, height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  aboutTitle: { fontSize: 18, fontWeight: '800' },
+  aboutVersion: { fontSize: 12, marginTop: 2 },
+  aboutDesc: { fontSize: 13, lineHeight: 20, marginBottom: 24 },
   saveRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 12, marginTop: 8 },
-  savedText: { color: COLORS.teal, fontSize: 14, fontWeight: '600' },
+  savedBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
+  savedText: { fontSize: 13, fontWeight: '600' },
 })
